@@ -295,10 +295,22 @@ function App() {
   const countRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Detect system preference initially
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Initial system detection
+    if (mediaQuery.matches) {
       setThemeMode('dark');
     }
+
+    // Listener for system theme changes
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      setThemeMode(e.matches ? 'dark' : 'light');
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+
+    // Cleanup
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, []);
 
   // Sync theme with body class for correct variable scoping
