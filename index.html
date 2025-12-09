@@ -4,8 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#120429" />
+    
+    <!-- Apple PWA specific tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PriceCalc">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/120429/00f0ff.png?text=AVG">
+
     <title>AVG PRICE CALC</title>
-    <link rel="manifest" href="/manifest.json">
+    <!-- Changed to relative path -->
+    <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -148,11 +156,13 @@
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <!-- Changed to relative path -->
+    <script type="module" src="./index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
+          // Changed to relative path
+          navigator.serviceWorker.register('./service-worker.js')
             .then(registration => {
               console.log('SW registered: ', registration);
             })
