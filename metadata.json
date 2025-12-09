@@ -1,0 +1,5 @@
+{
+  "name": "Price Printer",
+  "description": "A dual-theme (Morandi Light / Cyberpunk Dark) unit price calculator and receipt printer application.",
+  "requestFramePermissions": []
+}
