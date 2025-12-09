@@ -1,0 +1,21 @@
+{
+  "name": "AveragePriceCalculator",
+  "short_name": "PriceCalc",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#120429",
+  "theme_color": "#00f0ff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/120429/00f0ff.png?text=AVG",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://placehold.co/512x512/120429/00f0ff.png?text=AVG",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

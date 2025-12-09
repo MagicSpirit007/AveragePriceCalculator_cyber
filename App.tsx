@@ -222,8 +222,13 @@ const ConsoleInput = ({
       relative flex flex-col group transition-all duration-300
       ${active ? 'scale-105 z-10' : 'scale-100 opacity-80'}
     `}>
-      {/* HUD Lines - Decoration */}
-      <div className={`absolute -top-1 left-0 w-2 h-[1px] ${currentTheme.bg.replace('/10','')} transition-all duration-300 ${active ? 'opacity-100 w-full' : 'opacity-0'}`}></div>
+      {/* HUD Lines - Decoration - Full Width */}
+      <div className={`
+        absolute -top-1 left-0 h-[1px] 
+        ${currentTheme.bg.replace('/10','')} 
+        transition-all duration-300 w-full
+        ${active ? 'opacity-100 shadow-[0_0_8px_currentColor]' : 'opacity-40'}
+      `}></div>
       
       <label className={`
         text-[9px] uppercase font-bold tracking-[0.1em] mb-1 pl-1 transition-colors flex justify-between items-center
@@ -513,23 +518,44 @@ function App() {
            ))}
         </div>
 
-        {/* Header - Glitch Style */}
+        {/* Header - Glitch Style - BUTTONS ALIGNED WITH LIGHT MODE */}
         <header className="flex items-center justify-between px-5 py-4 z-40 relative">
           <div className="flex flex-col">
-             <h1 className="text-xl font-bold font-mono tracking-tighter text-white/90 animate-glitch" data-text="PRICE_PRINTER">
-                PRICE_PRINTER <span className="text-[10px] text-cyber-cyan">// V2.077</span>
+             <h1 className="text-xl font-bold font-mono tracking-tighter text-white/90 animate-glitch" data-text="AVG_PRICE_CALC">
+                AVG_PRICE_CALC <span className="text-[10px] text-cyber-cyan">// V2.077</span>
              </h1>
              <div className="flex items-center gap-1 text-[9px] text-cyber-acid/80 tracking-widest font-mono">
                 <span className="w-1.5 h-1.5 bg-cyber-acid rounded-full animate-pulse"></span>
                 SYSTEM ONLINE
              </div>
           </div>
-          <button 
-            onClick={toggleTheme}
-            className="p-2 text-white/50 hover:text-cyber-yellow hover:bg-white/5 rounded-full transition-all"
-          >
-            <Sun size={18} />
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={toggleTheme}
+              className="p-2 text-white/50 hover:text-cyber-yellow hover:bg-white/5 rounded-full transition-all"
+            >
+              <Sun size={18} />
+            </button>
+            
+            {showInstallBtn && (
+               <button 
+                 onClick={handleInstallClick}
+                 className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold text-cyber-black bg-cyber-cyan hover:bg-white hover:text-cyber-black transition-all shadow-[0_0_10px_rgba(0,240,255,0.4)] clip-tech-border"
+               >
+                 <Download size={10} /> INSTALL
+               </button>
+            )}
+
+            {items.length > 0 && (
+              <button 
+                onClick={handleReset}
+                className="p-2 text-white/50 hover:text-cyber-red hover:bg-white/5 rounded-full transition-all"
+                title="清空"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Main Area: Holographic Log */}
@@ -565,12 +591,18 @@ function App() {
 
           {/* --- THE ULTIMATE CYBERDECK CONSOLE --- */}
           {/* A heavy, bottom-anchored mechanical deck with 3D block styling */}
-          <div className={`
-             absolute bottom-0 left-0 right-0 z-50 
-             transition-transform duration-100
-             ${isPrinting ? 'animate-recoil' : ''}
-          `}>
-             <div className="console-3d-block bg-[#151520]/80 backdrop-blur-xl">
+          <div 
+             className={`
+                absolute bottom-0 left-0 right-0 z-50 
+                transition-transform duration-100
+                ${isPrinting ? 'animate-recoil' : ''}
+             `}
+             style={{
+               borderTopColor: activeTheme.text.replace('text-', '').replace('cyber-', '#').replace('pink', '#ff0096').replace('cyan', '#00f0ff').replace('yellow', '#fcee0a'),
+               boxShadow: `0 -10px 40px ${activeTheme.text.replace('text-', '').replace('cyber-', '').replace('pink', 'rgba(255,0,150,0.15)').replace('cyan', 'rgba(0,240,255,0.15)').replace('yellow', 'rgba(252,238,10,0.15)')}, inset 0 1px 0 ${activeTheme.text.replace('text-', '').replace('cyber-', '#').replace('pink', '#ff0096').replace('cyan', '#00f0ff').replace('yellow', '#fcee0a')}`
+             }}
+          >
+             <div className="console-3d-block bg-[#151520]/80 backdrop-blur-xl transition-all duration-500">
                 {/* Top Decorative Ridge (Mech Shape) */}
                 <div className="relative h-4 w-full">
                   <div className="absolute inset-0 border-b border-white/5 bg-[#1a1a24]"></div>
@@ -590,9 +622,9 @@ function App() {
 
                    <div className="relative max-w-md mx-auto space-y-4">
                       
-                      {/* Power Cables Animation */}
+                      {/* Power Cables Animation - FULL WIDTH */}
                       <div className="absolute -top-3 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/20 to-transparent">
-                         <div className={`absolute top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-${activeTheme.text.replace('text-','')} to-transparent animate-power-flow opacity-70`}></div>
+                         <div className={`absolute top-0 h-full w-full bg-gradient-to-r from-transparent via-${activeTheme.text.replace('text-','')} to-transparent animate-power-flow opacity-70`}></div>
                       </div>
 
                       {/* Inputs Section */}
@@ -653,29 +685,13 @@ function App() {
                         </div>
                       </div>
 
-                      {/* Lower Deck: Reset & Launch */}
+                      {/* Lower Deck: Launch Only */}
                       <div className="flex gap-3 h-14">
-                          <button 
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={handleReset}
-                            className="
-                              w-14 h-full
-                              bg-gray-900/80 backdrop-blur-sm
-                              border border-cyber-red/30 text-cyber-red/60
-                              flex items-center justify-center
-                              hover:text-cyber-red hover:border-cyber-red hover:bg-cyber-red/10 hover:shadow-neon-red
-                              active:scale-95 transition-all
-                              clip-corner-input
-                            "
-                          >
-                            <Trash2 size={20} />
-                          </button>
-
                           <button 
                             onClick={handlePrint}
                             disabled={!priceInput || !amountInput}
                             className={`
-                              flex-1 relative overflow-hidden group
+                              w-full relative overflow-hidden group
                               bg-gray-900/80 backdrop-blur-sm
                               border-2 ${!priceInput || !amountInput ? 'border-gray-800 opacity-50' : 'border-cyber-yellow hover:border-white'}
                               flex items-center justify-center
@@ -1102,7 +1118,7 @@ function App() {
           z-index: 0;
         }
         
-        /* The actual gap where paper comes out */
+        /* The actual gap where paper comes out --- */
         .paper-slot::after {
           content: '';
           width: 90%;
@@ -1262,7 +1278,7 @@ function App() {
 
       {/* --- Header --- */}
       <div className="header">
-        <div className="app-title">Price Printer</div>
+        <div className="app-title">AVG PRICE CALC</div>
         <div className="header-actions">
           <button className="action-btn" onClick={toggleTheme}>
             {themeMode === 'light' ? <Moon size={16} fill="currentColor" /> : <Sun size={16} fill="currentColor" />}
@@ -1275,7 +1291,7 @@ function App() {
           )}
           {items.length > 0 && (
             <button className="action-btn" onClick={handleReset}>
-              <RefreshCcw size={14} /> 重置
+              <RefreshCcw size={14} /> 
             </button>
           )}
         </div>
