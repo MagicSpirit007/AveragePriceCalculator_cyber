@@ -162,7 +162,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           // Changed to relative path
-          navigator.serviceWorker.register('/service-worker.js')
+          navigator.serviceWorker.register('./service-worker.js')
             .then(registration => {
               console.log('SW registered: ', registration);
             })
