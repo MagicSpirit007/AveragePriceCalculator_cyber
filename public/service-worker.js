@@ -1,21 +1,18 @@
-const CACHE_NAME = 'avg-price-calc-v3';
+const CACHE_NAME = 'avg-price-calc-v4';
 
-// Precache the minimal app shell; hashed build assets will be cached on first fetch.
-const PRECACHE_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  // External assets needed on first load (cached once online, then reused offline)
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&family=DotGothic16&display=swap',
-  'https://aistudiocdn.com/react@^19.2.1',
-  'https://aistudiocdn.com/react-dom@^19.2.1',
-  'https://aistudiocdn.com/lucide-react@^0.556.0'
-];
+// Precache only same-origin shell; runtime caching will pick up hashed assets and externals after first online load.
+const PRECACHE_ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      try {
+        await cache.addAll(PRECACHE_ASSETS);
+      } catch (err) {
+        // Avoid install failure if any single precache item blows up.
+        console.warn('[SW] Precache skipped item:', err);
+      }
+    })
   );
   self.skipWaiting();
 });
