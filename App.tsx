@@ -1412,7 +1412,7 @@ function App() {
                     type="text"
                     inputMode="decimal"
                     className="pastel-input bg-amount"
-                    placeholder="0.0"
+                    placeholder="1"
                     value={amountInput}
                     onFocus={() => setActiveField('amount')}
                     onChange={(e) => setAmountInput(e.target.value)}
