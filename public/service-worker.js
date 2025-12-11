@@ -1,7 +1,7 @@
-const CACHE_NAME = 'avg-price-calc-v6';
+const CACHE_NAME = 'avg-price-calc-v7';
 
 // Precache app shell; runtime caching will pick up hashed assets and externals after first online load.
-const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json', '/index.tsx'];
+const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
