@@ -261,7 +261,7 @@ const ConsoleInput = ({
             font-mono text-xl font-bold outline-none
             ${active ? `${currentTheme.text} drop-shadow-md` : 'text-gray-500'}
           `}
-          placeholder="0"
+          placeholder="1"
         />
         
         {/* Corner Accents */}

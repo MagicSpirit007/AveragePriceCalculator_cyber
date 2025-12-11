@@ -1,7 +1,7 @@
-const CACHE_NAME = 'avg-price-calc-v4';
+const CACHE_NAME = 'avg-price-calc-v5';
 
 // Precache only same-origin shell; runtime caching will pick up hashed assets and externals after first online load.
-const PRECACHE_ASSETS = ['./', './index.html', './manifest.json'];
+const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -44,17 +44,18 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() =>
+          caches.match(request).then((res) => res || caches.match('/index.html'))
+        )
     );
     return;
   }
 
-  // Stale-while-revalidate for others.
+  // Cache-first for same-origin GET; network fallback with background refresh.
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       const fetchPromise = fetch(request)
         .then((networkResponse) => {
-          // Cache successful responses.
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
@@ -63,6 +64,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cachedResponse);
 
+      // Return cache immediately if present; else wait for network.
       return cachedResponse || fetchPromise;
     })
   );
