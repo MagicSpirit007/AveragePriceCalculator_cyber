@@ -1396,7 +1396,7 @@ function App() {
                   type="text"
                   inputMode="decimal"
                   className="pastel-input bg-price"
-                  placeholder="0.0"
+                  placeholder="1"
                   value={priceInput}
                   onFocus={() => setActiveField('price')}
                   onChange={(e) => setPriceInput(e.target.value)}
