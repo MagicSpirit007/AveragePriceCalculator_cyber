@@ -35,37 +35,55 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
+  // Only handle safe, cacheable requests; let everything else fall through.
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  const offlineFallback = () =>
+    new Response('Offline', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+
   // For navigation requests, try network first, then fallback to cached index.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
+      (async () => {
+        try {
+          const response = await fetch(request);
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
-        })
-        .catch(() =>
-          caches.match(request).then((res) => res || caches.match('/index.html'))
-        )
+        } catch (err) {
+          const cached = (await caches.match(request)) || (await caches.match('/index.html'));
+          return cached || offlineFallback();
+        }
+      })()
     );
     return;
   }
 
   // Cache-first for same-origin GET; network fallback with background refresh.
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
+    (async () => {
+      const cachedResponse = await caches.match(request);
+
+      const fetchPromise = (async () => {
+        try {
+          const networkResponse = await fetch(request);
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return networkResponse;
-        })
-        .catch(() => cachedResponse);
+        } catch (err) {
+          return cachedResponse || offlineFallback();
+        }
+      })();
 
       // Return cache immediately if present; else wait for network.
       return cachedResponse || fetchPromise;
-    })
+    })()
   );
 });
