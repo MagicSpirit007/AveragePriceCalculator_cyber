@@ -1,7 +1,7 @@
-const CACHE_NAME = 'avg-price-calc-v5';
+const CACHE_NAME = 'avg-price-calc-v6';
 
-// Precache only same-origin shell; runtime caching will pick up hashed assets and externals after first online load.
-const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json'];
+// Precache app shell; runtime caching will pick up hashed assets and externals after first online load.
+const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json', '/index.tsx'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -40,7 +40,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const offlineFallback = () =>
+  const offlineFallback = async () =>
+    (await caches.match('/index.html')) ||
     new Response('Offline', {
       status: 503,
       headers: { 'Content-Type': 'text/plain' },
