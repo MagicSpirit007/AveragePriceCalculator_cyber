@@ -1,7 +1,9 @@
-const CACHE_NAME = 'avg-price-calc-v7';
+const CACHE_NAME = 'avg-price-calc-v8';
 
 // Precache app shell; runtime caching will pick up hashed assets and externals after first online load.
-const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json'];
+const toScopeUrl = (path) => new URL(path, self.registration.scope).toString();
+
+const PRECACHE_ASSETS = [toScopeUrl('./'), toScopeUrl('./index.html'), toScopeUrl('./manifest.json')];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -41,7 +43,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   const offlineFallback = async () =>
-    (await caches.match('/index.html')) ||
+    (await caches.match(toScopeUrl('./index.html'))) ||
     new Response('Offline', {
       status: 503,
       headers: { 'Content-Type': 'text/plain' },
@@ -57,7 +59,8 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         } catch (err) {
-          const cached = (await caches.match(request)) || (await caches.match('/index.html'));
+          const cached =
+            (await caches.match(request)) || (await caches.match(toScopeUrl('./index.html')));
           return cached || offlineFallback();
         }
       })()
@@ -73,7 +76,8 @@ self.addEventListener('fetch', (event) => {
       const fetchPromise = (async () => {
         try {
           const networkResponse = await fetch(request);
-          if (networkResponse && networkResponse.status === 200) {
+          // For cross-origin requests (CDNs/fonts), response can be opaque (status 0) but still cacheable.
+          if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
             const copy = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }

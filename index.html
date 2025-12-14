@@ -161,8 +161,10 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Changed to relative path
-          navigator.serviceWorker.register('./service-worker.js')
+          const baseUrl = new URL('.', window.location.href);
+          const swUrl = new URL('service-worker.js', baseUrl);
+          const scopeUrl = new URL('.', baseUrl);
+          navigator.serviceWorker.register(swUrl.href, { scope: scopeUrl.href })
             .then(registration => {
               console.log('SW registered: ', registration);
             })
