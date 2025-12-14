@@ -1,7 +1,7 @@
 {
   "name": "AveragePriceCalculator",
   "short_name": "PriceCalc",
-  "start_url": "./index.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#120429",
   "theme_color": "#00f0ff",
@@ -18,5 +18,5 @@
       "type": "image/png"
     }
   ],
-  "scope": "./"
+  "scope": "/"
 }
