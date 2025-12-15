@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avg-price-calc-v8';
+const CACHE_NAME = 'avg-price-calc-v9';
 
 // Precache app shell; runtime caching will pick up hashed assets and externals after first online load.
 const toScopeUrl = (path) => new URL(path, self.registration.scope).toString();
@@ -53,15 +53,36 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const indexUrl = toScopeUrl('./index.html');
+
+        // Cache-first for navigations (fast startup), with background revalidation.
+        const cachedIndex = await caches.match(indexUrl);
+        if (cachedIndex) {
+          event.waitUntil(
+            (async () => {
+              try {
+                const response = await fetch(new Request(indexUrl, { cache: 'no-store' }));
+                if (response && response.ok) {
+                  await cache.put(indexUrl, response.clone());
+                }
+              } catch (err) {
+                // Ignore background update failures.
+              }
+            })()
+          );
+          return cachedIndex;
+        }
+
+        // First-load (no cache yet): fall back to network.
         try {
           const response = await fetch(request);
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          if (response && response.ok) {
+            await cache.put(indexUrl, response.clone());
+          }
           return response;
         } catch (err) {
-          const cached =
-            (await caches.match(request)) || (await caches.match(toScopeUrl('./index.html')));
-          return cached || offlineFallback();
+          return offlineFallback();
         }
       })()
     );
