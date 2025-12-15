@@ -446,6 +446,18 @@ function App() {
             color: #e8ecff;
             font-family: 'JetBrains Mono', Consolas, monospace;
           }
+          html {
+            background: #050505;
+            overscroll-behavior-y: none;
+          }
+          body.dark-mode {
+            background: #050505;
+            overflow: hidden;
+            overscroll-behavior-y: none;
+          }
+          body.dark-mode #root {
+            height: 100%;
+          }
           .cyber-bg-gradient {
             position: absolute; inset: 0;
             background: linear-gradient(145deg, rgba(0,240,255,0.05), rgba(255,0,92,0.05), rgba(252,238,10,0.02));
@@ -497,7 +509,7 @@ function App() {
             backdrop-filter: blur(8px);
           }
           .typing-effect { letter-spacing: 0.32em; text-align: center; line-height: 1.6; }
-          .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+          .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior-y: contain; }
           .no-scrollbar::-webkit-scrollbar { display: none; }
           
           /* CRT and Particles */
