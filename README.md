@@ -1,3 +1,4 @@
+Developed with Google Ai Studio by Gemini3.0ProPreview
 This contains everything you need to run your app locally.
 
 ## Run Locally
