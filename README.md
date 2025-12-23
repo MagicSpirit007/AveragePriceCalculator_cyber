@@ -1,6 +1,6 @@
-## Built on Google AI Studio with Gemini 3.0 Pro Preview
+# Built on Google AI Studio with Gemini 3.0 Pro Preview
 
-##This contains everything you need to run your app locally.
+## This contains everything you need to run your app locally.
 
 ## Run Locally
 **Prerequisites:**  Node.js
@@ -20,4 +20,5 @@ Preview
 
 # day mode(phone)
 <img width="651" height="1101" alt="image" src="https://github.com/user-attachments/assets/b336b8c0-3a31-42a7-b29e-2a135907bb8c" />
+
 
