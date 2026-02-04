@@ -13,7 +13,7 @@ interface PriceBookPageProps {
 }
 
 export const PriceBookPage: React.FC<PriceBookPageProps> = ({ theme, onBack }) => {
-    const { favorites, folders, loading, removeFavorite, createFolder, getFavoritesInFolder } = useFavorites();
+    const { favorites, folders, loading, removeFavorite, createFolder, deleteFolder, getFavoritesInFolder } = useFavorites();
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -110,7 +110,11 @@ export const PriceBookPage: React.FC<PriceBookPageProps> = ({ theme, onBack }) =
                                 itemCount={getFavoritesInFolder(folder.id).length}
                                 onClick={() => setCurrentFolderId(folder.id)}
                                 theme={theme}
-                            // Add delete/rename handlers later
+                                onDelete={() => {
+                                    if (window.confirm('确定要删除这个文件夹吗？')) {
+                                        deleteFolder(folder.id);
+                                    }
+                                }}
                             />
                         ))}
                     </div>
