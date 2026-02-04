@@ -6,12 +6,21 @@ import {
     ShoppingBag,
     Sparkles,
     Download,
-    Moon
+    Moon,
+
+    Book
 } from 'lucide-react';
 import { ReceiptItem, THEME_COUNT, ActiveField } from '../../types';
 import { playSound } from '../../utils/sound';
 import { safeCalculate } from '../../utils/calculate';
 import { lightStyles } from './lightStyles';
+import { useHistory } from '../../hooks/useHistory';
+import { HistoryPage } from '../history/HistoryPage';
+import { FavoriteModal } from '../common/FavoriteModal';
+import { HistoryIcon } from '../common/HistoryIcon';
+import { useFavorites } from '../../hooks/useFavorites';
+import { LightReceipt } from './LightReceipt';
+import { PriceBookPage } from '../pricebook/PriceBookPage';
 
 interface LightModeAppProps {
     onToggleTheme: () => void;
@@ -21,12 +30,21 @@ interface LightModeAppProps {
  * 浅色模式主界面组件
  */
 export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => {
-    const [items, setItems] = useState<ReceiptItem[]>([]);
+    const [items, itemsSet] = useState<ReceiptItem[]>([]);
     const [priceInput, setPriceInput] = useState('');
     const [amountInput, setAmountInput] = useState('');
     const [countInput, setCountInput] = useState('');
     const [isPrinting, setIsPrinting] = useState(false);
     const [activeField, setActiveField] = useState<ActiveField>('price');
+    const [showHistory, setShowHistory] = useState(false);
+    const [showPriceBook, setShowPriceBook] = useState(false);
+
+    // Favorites State
+    const [favModalOpen, setFavModalOpen] = useState(false);
+    const [itemToFav, setItemToFav] = useState<ReceiptItem | null>(null);
+
+    const { addHistory } = useHistory();
+    const { favorites } = useFavorites();
 
     // PWA
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -70,7 +88,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
 
     const bestUnitPrice = items.length > 0 ? Math.min(...items.map((i) => i.unitPrice)) : -1;
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         const p = safeCalculate(priceInput);
         const perUnit = safeCalculate(amountInput);
         const countVal = safeCalculate(countInput);
@@ -99,7 +117,21 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
             themeIndex: currentThemeIndex,
         };
 
-        setItems([...items, newItem]);
+        const newItems = [...items, newItem];
+        itemsSet(newItems);
+
+        // Save to History
+        const minPrice = Math.min(...newItems.map(i => i.unitPrice));
+        const bestItem = newItems.find(i => i.unitPrice === minPrice) || newItem;
+
+        addHistory({
+            id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+            items: newItems,
+            bestItem: bestItem,
+            createdAt: new Date().toISOString(),
+            totalItemCount: newItems.length
+        });
+
         setPriceInput('');
         setAmountInput('');
         setCountInput('');
@@ -109,12 +141,17 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
 
     const removeItem = (id: number) => {
         playSound('delete');
-        setItems(items.filter((item) => item.id !== id));
+        itemsSet(items.filter((item) => item.id !== id));
+    };
+
+    const handleFavorite = (item: ReceiptItem) => {
+        setItemToFav(item);
+        setFavModalOpen(true);
     };
 
     const handleReset = () => {
         playSound('delete');
-        setItems([]);
+        itemsSet([]);
     };
 
     const handleMathInput = (symbol: string) => {
@@ -135,10 +172,28 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
         <div className="app-container">
             <style>{lightStyles}</style>
 
+            {/* View Switching */}
+            {showHistory && <HistoryPage theme="light" onBack={() => setShowHistory(false)} />}
+            {showPriceBook && <PriceBookPage theme="light" onBack={() => setShowPriceBook(false)} />}
+
+            {/* Modal */}
+            <FavoriteModal
+                isOpen={favModalOpen}
+                onClose={() => setFavModalOpen(false)}
+                item={itemToFav}
+                theme="light"
+            />
+
             {/* --- Header --- */}
             <div className="header">
                 <div className="app-title">AVG PRICE CALC</div>
                 <div className="header-actions">
+                    <button className="action-btn" onClick={() => { playSound('click'); setShowPriceBook(true); }}>
+                        <Book size={16} fill="currentColor" />
+                    </button>
+                    <button className="action-btn" onClick={() => { playSound('click'); setShowHistory(true); }}>
+                        <HistoryIcon size={16} />
+                    </button>
                     <button className="action-btn" onClick={() => { playSound('click'); onToggleTheme(); }}>
                         <Moon size={16} fill="currentColor" />
                     </button>
@@ -171,48 +226,15 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                     const isBest = items.length > 1 && item.unitPrice === bestUnitPrice;
 
                     return (
-                        <div key={item.id} className={`receipt theme-${item.themeIndex}`}>
-                            {/* Color Band */}
-                            <div className="receipt-band"></div>
-
-                            <div className="receipt-content">
-                                <div className="receipt-row">
-                                    <span className="r-label">#{String(index + 1).padStart(2, '0')} 商品</span>
-                                    <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)' }}>
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-
-                                <div className="receipt-row" style={{ marginTop: '12px' }}>
-                                    <div>
-                                        <div className="r-val">¥{item.price}</div>
-                                        <div className="r-label">总价</div>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div className="r-val">
-                                            {item.totalAmount}
-                                            {item.count > 1 && <span className="r-sub">({item.perUnitAmount}×{item.count})</span>}
-                                        </div>
-                                        <div className="r-label">总量</div>
-                                    </div>
-                                </div>
-
-                                <div className="unit-price-display">
-                                    {isBest && (
-                                        <div className="best-badge">
-                                            <Sparkles size={10} fill="currentColor" /> BEST
-                                        </div>
-                                    )}
-                                    <span className="up-val">
-                                        {item.unitPrice < 0.1 ? item.unitPrice.toFixed(4) : item.unitPrice.toFixed(2)}
-                                    </span>
-                                    <span className="up-unit">元/单位</span>
-                                </div>
-                            </div>
-
-                            {/* Jagged Bottom */}
-                            <div className="receipt-jagged"></div>
-                        </div>
+                        <LightReceipt
+                            key={item.id}
+                            item={item}
+                            index={index}
+                            isBest={isBest}
+                            onRemove={() => removeItem(item.id)}
+                            onFavorite={() => handleFavorite(item)}
+                            isFavorite={favorites.some(f => f.id === item.id)}
+                        />
                     );
                 })}
             </div>

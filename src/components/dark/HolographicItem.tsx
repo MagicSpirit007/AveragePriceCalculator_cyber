@@ -1,17 +1,19 @@
 import React from 'react';
-import { Trash2, Zap } from 'lucide-react';
+import { Trash2, Zap, Star } from 'lucide-react';
 import { ReceiptItem } from '../../types';
 
 interface HolographicItemProps {
     item: ReceiptItem;
     isBest: boolean;
     onRemove: () => void;
+    onFavorite?: () => void;
+    isFavorite?: boolean;
 }
 
 /**
  * 深色模式全息风格小票卡片组件
  */
-export const HolographicItem: React.FC<HolographicItemProps> = ({ item, isBest, onRemove }) => {
+export const HolographicItem: React.FC<HolographicItemProps> = ({ item, isBest, onRemove, onFavorite, isFavorite }) => {
     return (
         <div className={`
       relative p-4 mb-3 transition-all duration-500 animate-hologram-flicker
@@ -26,7 +28,7 @@ export const HolographicItem: React.FC<HolographicItemProps> = ({ item, isBest, 
             <div className="absolute left-0 right-0 h-[2px] bg-white/50 shadow-[0_0_10px_white] animate-scan-beam pointer-events-none z-30"></div>
 
             {/* Main Content */}
-            <div className="flex justify-between items-start mb-2 relative z-10 pr-10">
+            <div className="flex justify-between items-start mb-2 relative z-10 pr-16 bg-transparent">
                 <div>
                     <div className="text-3xl font-mono font-bold text-white drop-shadow-md">
                         <span className={`text-sm mr-1 ${isBest ? 'text-cyber-cyan' : 'text-cyber-violet'}`}>¥</span>{item.price.toLocaleString()}
@@ -63,16 +65,25 @@ export const HolographicItem: React.FC<HolographicItemProps> = ({ item, isBest, 
                 </div>
             </div>
 
-            <button
-                onClick={onRemove}
-                className="
-          absolute top-0 right-0 p-3
-          text-gray-600 hover:text-cyber-red
-          transition-colors duration-200 z-20
-        "
-            >
-                <Trash2 size={16} />
-            </button>
+            {/* Actions */}
+            <div className="absolute top-0 right-0 z-20 flex">
+                {onFavorite && (
+                    <button
+                        onClick={onFavorite}
+                        className={`p-3 transition-colors duration-200 ${isFavorite ? 'text-cyber-yellow' : 'text-gray-600 hover:text-cyber-yellow'}`}
+                        title="收藏"
+                    >
+                        <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
+                    </button>
+                )}
+                <button
+                    onClick={onRemove}
+                    className="p-3 text-gray-600 hover:text-cyber-red transition-colors duration-200"
+                    title="删除"
+                >
+                    <Trash2 size={16} />
+                </button>
+            </div>
         </div>
     );
 };

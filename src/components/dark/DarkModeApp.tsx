@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Download, Sun, Terminal, Play } from 'lucide-react';
+import { Trash2, Download, Sun, Terminal, Play, Book } from 'lucide-react';
 import { ReceiptItem, THEME_COUNT, ActiveField } from '../../types';
 import { playSound } from '../../utils/sound';
 import { safeCalculate } from '../../utils/calculate';
 import { HolographicItem } from './HolographicItem';
 import { ConsoleInput } from './ConsoleInput';
 import { darkStyles, operatorStyles, activeColorMap } from './darkStyles';
+import { useHistory } from '../../hooks/useHistory';
+import { HistoryPage } from '../history/HistoryPage';
+import { FavoriteModal } from '../common/FavoriteModal';
+import { HistoryIcon } from '../common/HistoryIcon';
+import { useFavorites } from '../../hooks/useFavorites';
+import { PriceBookPage } from '../pricebook/PriceBookPage';
 
 interface DarkModeAppProps {
     onToggleTheme: () => void;
@@ -15,12 +21,21 @@ interface DarkModeAppProps {
  * 深色模式主界面组件
  */
 export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
-    const [items, setItems] = useState<ReceiptItem[]>([]);
+    const [items, itemsSet] = useState<ReceiptItem[]>([]);
     const [priceInput, setPriceInput] = useState('');
     const [amountInput, setAmountInput] = useState('');
     const [countInput, setCountInput] = useState('');
     const [isPrinting, setIsPrinting] = useState(false);
     const [activeField, setActiveField] = useState<ActiveField>('price');
+    const [showHistory, setShowHistory] = useState(false);
+    const [showPriceBook, setShowPriceBook] = useState(false);
+
+    // Favorites State
+    const [favModalOpen, setFavModalOpen] = useState(false);
+    const [itemToFav, setItemToFav] = useState<ReceiptItem | null>(null);
+
+    const { addHistory } = useHistory();
+    const { favorites } = useFavorites();
 
     // PWA
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -64,7 +79,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
 
     const bestUnitPrice = items.length > 0 ? Math.min(...items.map((i) => i.unitPrice)) : -1;
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         const p = safeCalculate(priceInput);
         const perUnit = safeCalculate(amountInput);
         const countVal = safeCalculate(countInput);
@@ -93,7 +108,21 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
             themeIndex: currentThemeIndex,
         };
 
-        setItems([...items, newItem]);
+        const newItems = [...items, newItem];
+        itemsSet(newItems);
+
+        // Save to History
+        const minPrice = Math.min(...newItems.map(i => i.unitPrice));
+        const bestItem = newItems.find(i => i.unitPrice === minPrice) || newItem;
+
+        addHistory({
+            id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+            items: newItems,
+            bestItem: bestItem,
+            createdAt: new Date().toISOString(),
+            totalItemCount: newItems.length
+        });
+
         setPriceInput('');
         setAmountInput('');
         setCountInput('');
@@ -103,12 +132,17 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
 
     const removeItem = (id: number) => {
         playSound('delete');
-        setItems(items.filter((item) => item.id !== id));
+        itemsSet(items.filter((item) => item.id !== id));
+    };
+
+    const handleFavorite = (item: ReceiptItem) => {
+        setItemToFav(item);
+        setFavModalOpen(true);
     };
 
     const handleReset = () => {
         playSound('delete');
-        setItems([]);
+        itemsSet([]);
     };
 
     const handleMathInput = (symbol: string) => {
@@ -130,6 +164,18 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
     return (
         <div className="dark-cyber-app h-screen w-full overflow-hidden flex flex-col relative text-white">
             <style>{darkStyles}</style>
+
+            {/* View Switching */}
+            {showHistory && <HistoryPage theme="dark" onBack={() => setShowHistory(false)} />}
+            {showPriceBook && <PriceBookPage theme="dark" onBack={() => setShowPriceBook(false)} />}
+
+            {/* Modal */}
+            <FavoriteModal
+                isOpen={favModalOpen}
+                onClose={() => setFavModalOpen(false)}
+                item={itemToFav}
+                theme="dark"
+            />
 
             {/* --- Global Effects --- */}
             <div className="scanlines"></div>
@@ -163,6 +209,20 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => { playSound('click'); setShowPriceBook(true); }}
+                        className="p-2 text-white/50 hover:text-cyber-cyan hover:bg-white/5 rounded-full transition-all"
+                        title="价格册"
+                    >
+                        <Book size={18} />
+                    </button>
+                    <button
+                        onClick={() => { playSound('click'); setShowHistory(true); }}
+                        className="p-2 text-white/50 hover:text-cyber-violet hover:bg-white/5 rounded-full transition-all"
+                        title="历史"
+                    >
+                        <HistoryIcon size={18} />
+                    </button>
                     <button
                         onClick={() => { playSound('click'); onToggleTheme(); }}
                         className="p-2 text-white/50 hover:text-cyber-yellow hover:bg-white/5 rounded-full transition-all"
@@ -216,6 +276,8 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                     item={item}
                                     isBest={item.unitPrice === bestUnitPrice}
                                     onRemove={() => removeItem(item.id)}
+                                    onFavorite={() => handleFavorite(item)}
+                                    isFavorite={favorites.some(f => f.id === item.id)}
                                 />
                             ))}
                         </div>
