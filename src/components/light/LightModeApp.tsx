@@ -192,7 +192,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                 <div className="app-title">AVG PRICE CALC</div>
                 <div className="header-actions">
                     <button className="action-btn" onClick={() => { playSound('click'); setShowPriceBook(true); }}>
-                        <Book size={16} fill="currentColor" />
+                        <Book size={18} />
                     </button>
                     <button className="action-btn" onClick={() => { playSound('click'); setShowHistory(true); }}>
                         <HistoryIcon size={16} />
