@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder as FolderIcon, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { Folder } from '../../types/favorites';
 
 interface FolderCardProps {
@@ -27,7 +27,21 @@ export const FolderCard: React.FC<FolderCardProps> = ({ folder, itemCount, onCli
                 w-12 h-12 rounded-lg flex items-center justify-center mb-3
                 ${theme === 'dark' ? 'bg-cyber-cyan/10 text-cyber-cyan' : 'bg-[#EBF4F8] text-[#11616B]'}
             `}>
-                <FolderIcon size={24} fill="currentColor" className="opacity-80" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-book opacity-80"
+                    aria-hidden="true"
+                >
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path>
+                </svg>
             </div>
 
             <div className="pr-6">

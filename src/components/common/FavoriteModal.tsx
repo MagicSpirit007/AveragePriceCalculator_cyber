@@ -70,7 +70,7 @@ export const FavoriteModal: React.FC<FavoriteModalProps> = ({ isOpen, onClose, i
     const labelClass = theme === 'dark' ? "text-xs font-bold text-white/50 uppercase mb-2 block" : "text-xs font-bold text-[#11616B]/60 uppercase mb-2 block";
 
     const btnPrimaryClass = theme === 'dark'
-        ? "flex-1 bg-cyber-primary text-black font-bold py-3 rounded-lg hover:bg-white transition-all ml-2"
+        ? "flex-1 bg-white/5 text-white font-bold py-3 rounded-lg hover:bg-white/10 transition-all ml-2"
         : "flex-1 bg-[#DC8B70] text-white font-bold py-3 rounded-lg hover:bg-[#B56A50] transition-all ml-2";
 
     const btnSecondaryClass = theme === 'dark'
