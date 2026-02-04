@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder as FolderIcon, Plus } from 'lucide-react';
+import { Folder as FolderIcon, Plus, Trash2 } from 'lucide-react';
 import { Folder } from '../../types/favorites';
 
 interface FolderPickerProps {
@@ -7,13 +7,14 @@ interface FolderPickerProps {
     selectedId: string | null;
     onSelect: (id: string | null) => void;
     onCreateNew: () => void;
+    onDelete: (id: string) => void; // Added prop
     theme?: 'light' | 'dark';
 }
 
-export const FolderPicker: React.FC<FolderPickerProps> = ({ folders, selectedId, onSelect, onCreateNew, theme = 'light' }) => {
+export const FolderPicker: React.FC<FolderPickerProps> = ({ folders, selectedId, onSelect, onCreateNew, onDelete, theme = 'light' }) => {
 
     const itemClass = (isActive: boolean) => `
-        flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all
+        flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all relative group/folder
         ${isActive
             ? (theme === 'dark' ? 'bg-cyber-primary/20 border border-cyber-primary text-cyber-primary' : 'bg-[#11616B]/10 text-[#11616B] font-bold')
             : (theme === 'dark' ? 'hover:bg-white/5 text-white/70' : 'hover:bg-gray-50 text-gray-600')
@@ -41,7 +42,24 @@ export const FolderPicker: React.FC<FolderPickerProps> = ({ folders, selectedId,
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-opacity-20`} style={{ backgroundColor: folder.color || (theme === 'dark' ? '#333' : '#eee'), color: folder.color }}>
                         <FolderIcon size={14} fill="currentColor" />
                     </div>
-                    <span className="text-sm">{folder.name}</span>
+                    <span className="text-sm flex-1">{folder.name}</span>
+
+                    {/* Delete Button */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Confirm delete folder? Items will move to Main.')) {
+                                onDelete(folder.id);
+                            }
+                        }}
+                        className={`
+                            opacity-0 group-hover/folder:opacity-100 p-1.5 rounded-full transition-all
+                            ${theme === 'dark' ? 'hover:bg-red-500/20 text-red-400' : 'hover:bg-red-100 text-red-500'}
+                        `}
+                        title="Delete Folder"
+                    >
+                        <Trash2 size={12} />
+                    </button>
                 </div>
             ))}
 

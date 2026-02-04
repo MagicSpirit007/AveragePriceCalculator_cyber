@@ -92,11 +92,11 @@ export const FavoriteModal: React.FC<FavoriteModalProps> = ({ isOpen, onClose, i
                     />
                 </div>
 
-                {/* Tags */}
-                <div>
+                {/* Tags Removed */}
+                {/* <div>
                     <label className={labelClass}>{theme === 'dark' ? 'Tags' : '标签'}</label>
                     <TagInput tags={tags} onChange={setTags} theme={theme} placeholder={theme === 'dark' ? "Type & Enter..." : "输入标签..."} />
-                </div>
+                </div> */}
 
                 {/* Note */}
                 <div>

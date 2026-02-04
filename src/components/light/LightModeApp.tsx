@@ -32,7 +32,7 @@ interface LightModeAppProps {
 export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => {
     const [items, itemsSet] = useState<ReceiptItem[]>([]);
     const [priceInput, setPriceInput] = useState('');
-    const [amountInput, setAmountInput] = useState('');
+    const [labelInput, setLabelInput] = useState('');
     const [countInput, setCountInput] = useState('');
     const [isPrinting, setIsPrinting] = useState(false);
     const [activeField, setActiveField] = useState<ActiveField>('price');
@@ -52,7 +52,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const priceRef = useRef<HTMLInputElement>(null);
-    const amountRef = useRef<HTMLInputElement>(null);
+    const labelRef = useRef<HTMLInputElement>(null);
     const countRef = useRef<HTMLInputElement>(null);
 
     // 滚动到底部
@@ -90,11 +90,13 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
 
     const handlePrint = async () => {
         const p = safeCalculate(priceInput);
-        const perUnit = safeCalculate(amountInput);
         const countVal = safeCalculate(countInput);
         const count = (isNaN(countVal) || countVal <= 0) ? 1 : countVal;
 
-        if (isNaN(p) || isNaN(perUnit) || perUnit <= 0) {
+        // Fixed per unit to 1
+        const perUnit = 1;
+
+        if (isNaN(p)) {
             playSound('error');
             return;
         }
@@ -103,7 +105,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
         setIsPrinting(true);
         setTimeout(() => setIsPrinting(false), 300);
 
-        const totalAmount = perUnit * count;
+        const totalAmount = count;
         const currentThemeIndex = items.length % THEME_COUNT;
 
         const newItem: ReceiptItem = {
@@ -112,9 +114,10 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
             perUnitAmount: perUnit,
             count: count,
             totalAmount: totalAmount,
-            unitPrice: p / totalAmount,
+            unitPrice: p / count,
             timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
             themeIndex: currentThemeIndex,
+            label: labelInput
         };
 
         const newItems = [...items, newItem];
@@ -133,7 +136,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
         });
 
         setPriceInput('');
-        setAmountInput('');
+        setLabelInput('');
         setCountInput('');
         setActiveField('price');
         priceRef.current?.focus();
@@ -160,8 +163,8 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
             setPriceInput((prev) => prev + symbol);
             priceRef.current?.focus();
         } else if (activeField === 'amount') {
-            setAmountInput((prev) => prev + symbol);
-            amountRef.current?.focus();
+            setLabelInput((prev) => prev + symbol);
+            labelRef.current?.focus();
         } else if (activeField === 'count') {
             setCountInput((prev) => prev + symbol);
             countRef.current?.focus();
@@ -275,20 +278,20 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                             {/* Row 2: Amount & Count */}
                             <div className="input-row">
                                 <div className="input-group" style={{ flex: 1.4 }}>
-                                    <span className="input-label">数量</span>
+                                    <span className="input-label">标签</span>
                                     <input
-                                        ref={amountRef}
+                                        ref={labelRef}
                                         type="text"
-                                        inputMode="decimal"
+                                        // inputMode="decimal" // Text input now
                                         className="pastel-input bg-amount"
-                                        placeholder="1"
-                                        value={amountInput}
+                                        placeholder="可选..."
+                                        value={labelInput}
                                         onFocus={() => setActiveField('amount')}
-                                        onChange={(e) => setAmountInput(e.target.value)}
+                                        onChange={(e) => setLabelInput(e.target.value)}
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <span className="input-label">件数</span>
+                                    <span className="input-label">数量</span>
                                     <input
                                         ref={countRef}
                                         type="number"
@@ -307,7 +310,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                         <button
                             className={`print-btn ${isPrinting ? 'animate' : ''}`}
                             onClick={handlePrint}
-                            disabled={!priceInput || !amountInput}
+                            disabled={!priceInput || !countInput}
                         >
                             <Printer size={32} strokeWidth={3} />
                         </button>

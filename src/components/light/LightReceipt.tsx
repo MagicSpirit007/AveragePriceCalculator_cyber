@@ -19,7 +19,7 @@ export const LightReceipt: React.FC<LightReceiptProps> = ({ item, index, isBest,
 
             <div className="receipt-content">
                 <div className="receipt-row">
-                    <span className="r-label">#{String(index + 1).padStart(2, '0')} 商品</span>
+                    <span className="r-label">{item.label ? item.label : `#${String(index + 1).padStart(2, '0')} 商品`}</span>
                     <div className="flex items-center gap-1">
                         {onFavorite && (
                             <button onClick={onFavorite} style={{ background: 'none', border: 'none', color: isFavorite ? '#F59E0B' : 'var(--text-tertiary)', cursor: 'pointer' }} title="收藏">

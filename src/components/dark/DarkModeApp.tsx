@@ -23,7 +23,7 @@ interface DarkModeAppProps {
 export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
     const [items, itemsSet] = useState<ReceiptItem[]>([]);
     const [priceInput, setPriceInput] = useState('');
-    const [amountInput, setAmountInput] = useState('');
+    const [labelInput, setLabelInput] = useState('');
     const [countInput, setCountInput] = useState('');
     const [isPrinting, setIsPrinting] = useState(false);
     const [activeField, setActiveField] = useState<ActiveField>('price');
@@ -43,7 +43,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const priceRef = useRef<HTMLInputElement>(null);
-    const amountRef = useRef<HTMLInputElement>(null);
+    const labelRef = useRef<HTMLInputElement>(null);
     const countRef = useRef<HTMLInputElement>(null);
 
     // 滚动到底部
@@ -81,11 +81,13 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
 
     const handlePrint = async () => {
         const p = safeCalculate(priceInput);
-        const perUnit = safeCalculate(amountInput);
         const countVal = safeCalculate(countInput);
         const count = (isNaN(countVal) || countVal <= 0) ? 1 : countVal;
 
-        if (isNaN(p) || isNaN(perUnit) || perUnit <= 0) {
+        // Per unit amount is always 1 in this new mode
+        const perUnit = 1;
+
+        if (isNaN(p)) {
             playSound('error');
             return;
         }
@@ -94,18 +96,19 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
         setIsPrinting(true);
         setTimeout(() => setIsPrinting(false), 300);
 
-        const totalAmount = perUnit * count;
+        const totalAmount = count; // total simple quantity
         const currentThemeIndex = items.length % THEME_COUNT;
 
         const newItem: ReceiptItem = {
             id: Date.now(),
             price: p,
-            perUnitAmount: perUnit,
+            perUnitAmount: perUnit, // Keep for compatibility or set 1
             count: count,
             totalAmount: totalAmount,
-            unitPrice: p / totalAmount,
+            unitPrice: p / count,
             timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
             themeIndex: currentThemeIndex,
+            label: labelInput // Store label
         };
 
         const newItems = [...items, newItem];
@@ -124,7 +127,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
         });
 
         setPriceInput('');
-        setAmountInput('');
+        setLabelInput('');
         setCountInput('');
         setActiveField('price');
         priceRef.current?.focus();
@@ -150,9 +153,12 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
         if (activeField === 'price') {
             setPriceInput((prev) => prev + symbol);
             priceRef.current?.focus();
-        } else if (activeField === 'amount') {
-            setAmountInput((prev) => prev + symbol);
-            amountRef.current?.focus();
+        } else if (activeField === 'amount') { // Keeping 'amount' as key for label to avoid type breakage for now or I should allow text input?
+            // Wait, label is text. Math pad shouldn't affect it unless user wants numbers.
+            // But ConsoleInput usually binds 'onChange'.
+            // If activeField is label, maybe allow appending numbers?
+            setLabelInput((prev) => prev + symbol);
+            labelRef.current?.focus();
         } else if (activeField === 'count') {
             setCountInput((prev) => prev + symbol);
             countRef.current?.focus();
@@ -329,24 +335,27 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                         onFocus={() => setActiveField('price')}
                                         inputRef={priceRef}
                                         themeColor="pink"
+                                        placeholder="0"
+                                    />
+                                    <ConsoleInput
+                                        label="标签"
+                                        value={labelInput}
+                                        active={activeField === 'amount'} // Reusing 'amount' state ID for Label field
+                                        onChange={setLabelInput}
+                                        onFocus={() => setActiveField('amount')}
+                                        inputRef={labelRef}
+                                        themeColor="cyan"
+                                        placeholder="可选..."
                                     />
                                     <ConsoleInput
                                         label="数量"
-                                        value={amountInput}
-                                        active={activeField === 'amount'}
-                                        onChange={setAmountInput}
-                                        onFocus={() => setActiveField('amount')}
-                                        inputRef={amountRef}
-                                        themeColor="cyan"
-                                    />
-                                    <ConsoleInput
-                                        label="件数"
                                         value={countInput}
                                         active={activeField === 'count'}
                                         onChange={setCountInput}
                                         onFocus={() => setActiveField('count')}
                                         inputRef={countRef}
                                         themeColor="yellow"
+                                        placeholder="1"
                                     />
                                 </div>
 
@@ -381,11 +390,11 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                 <div className="flex gap-3 h-14">
                                     <button
                                         onClick={handlePrint}
-                                        disabled={!priceInput || !amountInput}
+                                        disabled={!priceInput || !countInput} // Label not required? Assuming logic. User said change amount to label.
                                         className={`
                                             w-full relative overflow-hidden group
                                             bg-gray-900/80 backdrop-blur-sm
-                                            border-2 ${!priceInput || !amountInput ? 'border-gray-800 opacity-50' : 'border-cyber-yellow hover:border-white'}
+                                            border-2 ${!priceInput || !countInput ? 'border-gray-800 opacity-50' : 'border-cyber-yellow hover:border-white'}
                                             flex items-center justify-center
                                             clip-corner-input
                                             transition-all duration-200
@@ -398,7 +407,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                         {/* Text & Icon */}
                                         <div className={`
                                             relative z-10 flex items-center gap-3 font-black text-lg tracking-[0.2em] uppercase italic
-                                            ${!priceInput || !amountInput ? 'text-gray-600' : 'text-cyber-yellow group-hover:text-white group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]'}
+                                            ${!priceInput || !countInput ? 'text-gray-600' : 'text-cyber-yellow group-hover:text-white group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]'}
                                         `}>
                                             <span>开始分析</span>
                                             <Play size={20} className="fill-current" />

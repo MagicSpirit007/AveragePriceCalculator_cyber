@@ -8,6 +8,7 @@ export interface ReceiptItem {
     unitPrice: number;
     timestamp: string;
     themeIndex: number;
+    label?: string;
 }
 
 // 主题数量常量

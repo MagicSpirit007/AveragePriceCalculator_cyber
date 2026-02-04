@@ -34,7 +34,9 @@ export const HolographicItem: React.FC<HolographicItemProps> = ({ item, isBest, 
                         <span className={`text-sm mr-1 ${isBest ? 'text-cyber-cyan' : 'text-cyber-violet'}`}>¥</span>{item.price.toLocaleString()}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-[10px] ${isBest ? 'text-cyber-cyan bg-cyber-cyan/10' : 'text-cyber-violet bg-cyber-violet/10'} font-mono px-1 rounded`}>ID_{item.id.toString().slice(-4)}</span>
+                        <span className={`text-[10px] ${isBest ? 'text-cyber-cyan bg-cyber-cyan/10' : 'text-cyber-violet bg-cyber-violet/10'} font-mono px-1 rounded`}>
+                            {item.label ? item.label : `ID_${item.id.toString().slice(-4)}`}
+                        </span>
                         <span className="text-[10px] text-gray-400 font-mono">{item.timestamp}</span>
                     </div>
                 </div>

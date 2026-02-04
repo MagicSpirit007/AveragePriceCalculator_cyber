@@ -9,6 +9,7 @@ interface ConsoleInputProps {
     onFocus: () => void;
     inputRef: React.RefObject<HTMLInputElement>;
     themeColor: ConsoleInputColor;
+    placeholder?: string;
 }
 
 // 颜色主题配置
@@ -46,7 +47,8 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
     onChange,
     onFocus,
     inputRef,
-    themeColor
+    themeColor,
+    placeholder
 }) => {
     const currentTheme = colorThemes[themeColor];
 
@@ -94,7 +96,7 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
             font-mono text-xl font-bold outline-none
             ${active ? `${currentTheme.text} drop-shadow-md` : 'text-gray-500'}
           `}
-                    placeholder="1"
+                    placeholder={placeholder || ""}
                 />
 
                 {/* Corner Accents */}
