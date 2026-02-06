@@ -17,7 +17,7 @@
 
 ### Prerequisites
 1. Node.js (已满足)
-2. JDK 17+ (至少 JDK 11，推荐 17)
+2. JDK 21
 3. Android SDK / Android Studio (用于 Gradle 构建)
 
 ### First-time Setup
@@ -34,8 +34,8 @@
 - 发布包：`android/app/build/outputs/apk/release/app-release-unsigned.apk`
 
 ### Common Issue
-- 如果出现 `Dependency requires at least JVM runtime version 11`，说明当前 Java 版本过低（例如 Java 8）。
-- 解决方法：安装 JDK 17 并正确设置 `JAVA_HOME`，然后重试 `npm run apk:debug`。
+- 如果出现 `Dependency requires at least JVM runtime version 11`，说明当前 Java 版本过低。
+- 解决方法：安装 JDK 21 并正确设置 `JAVA_HOME`，然后重试 `npm run apk:debug`。
 
 ## Screenshots
 ### Dark Mode
@@ -52,5 +52,7 @@
 
 ## License
 MIT
+
+
 
 
