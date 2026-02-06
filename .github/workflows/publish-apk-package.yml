@@ -1,0 +1,85 @@
+name: Publish APK to GitHub Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version (for example: 1.0.0)"
+        required: true
+        default: "1.0.0"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web and sync Android
+        run: npm run build:android
+
+      - name: Prepare release signing (optional)
+        working-directory: android
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [[ -n "${ANDROID_KEYSTORE_BASE64}" && -n "${ANDROID_KEYSTORE_PASSWORD}" && -n "${ANDROID_KEY_ALIAS}" && -n "${ANDROID_KEY_PASSWORD}" ]]; then
+            echo "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > app/release.jks
+            printf "storeFile=app/release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n" \
+              "${ANDROID_KEYSTORE_PASSWORD}" \
+              "${ANDROID_KEY_ALIAS}" \
+              "${ANDROID_KEY_PASSWORD}" > keystore.properties
+            echo "Release signing is configured."
+          else
+            echo "Signing secrets are missing. Publishing unsigned release APK."
+          fi
+
+      - name: Resolve package version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "APP_VERSION=${VERSION}" >> "${GITHUB_ENV}"
+          echo "Publishing version: ${VERSION}"
+
+      - name: Ensure Gradle wrapper executable
+        run: chmod +x android/gradlew
+
+      - name: Publish APK package
+        working-directory: android
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          APP_VERSION: ${{ env.APP_VERSION }}
+        run: ./gradlew :app:publishReleaseApkPublicationToGitHubPackagesRepository --no-daemon

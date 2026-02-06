@@ -30,3 +30,7 @@ android/local.properties
 android/keystore.properties
 android/app/*.jks
 android/app/*.keystore
+SignPassword.txt
+android/.gradle/
+android/build/
+android/app/build/
