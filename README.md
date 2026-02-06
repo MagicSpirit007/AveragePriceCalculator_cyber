@@ -17,7 +17,7 @@
 
 ### Prerequisites
 1. Node.js (已满足)
-2. JDK 17+ (至少 JDK 11，推荐 17)
+2. JDK 21
 3. Android SDK / Android Studio (用于 Gradle 构建)
 
 ### First-time Setup
@@ -52,6 +52,7 @@
 
 ## License
 MIT
+
 
 
 
