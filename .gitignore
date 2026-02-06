@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 a.txt
+
+# Android signing and local SDK config
+android/local.properties
+android/keystore.properties
+android/app/*.jks
+android/app/*.keystore
