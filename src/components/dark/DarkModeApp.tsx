@@ -346,6 +346,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                         inputRef={labelRef}
                                         themeColor="cyan"
                                         placeholder="可选..."
+                                        inputMode="text"
                                     />
                                     <ConsoleInput
                                         label="数量"

@@ -294,8 +294,8 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                                     <span className="input-label">数量</span>
                                     <input
                                         ref={countRef}
-                                        type="number"
-                                        inputMode="numeric"
+                                        type="text"
+                                        inputMode="decimal"
                                         className="pastel-input bg-count"
                                         placeholder="1"
                                         value={countInput}

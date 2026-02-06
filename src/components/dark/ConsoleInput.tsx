@@ -10,6 +10,7 @@ interface ConsoleInputProps {
     inputRef: React.RefObject<HTMLInputElement>;
     themeColor: ConsoleInputColor;
     placeholder?: string;
+    inputMode?: 'text' | 'decimal' | 'numeric';
 }
 
 // 颜色主题配置
@@ -48,7 +49,8 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
     onFocus,
     inputRef,
     themeColor,
-    placeholder
+    placeholder,
+    inputMode = 'decimal'
 }) => {
     const currentTheme = colorThemes[themeColor];
 
@@ -87,7 +89,7 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
                 <input
                     ref={inputRef}
                     type="text"
-                    inputMode="decimal"
+                    inputMode={inputMode}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onFocus={onFocus}
