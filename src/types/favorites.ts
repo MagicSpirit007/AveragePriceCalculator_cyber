@@ -21,12 +21,14 @@ export interface Folder {
 
 // 收藏项
 export interface FavoriteItem extends ReceiptItem {
-    dbId?: number;              // IndexedDB 自动生成的 ID (可选)
+    favoriteId: string;         // 收藏记录的持久化 ID
     tags: string[];             // 用户自定义标签
     folderId: string | null;    // null = 根目录
     favoriteAt: string;
     note?: string;              // 可选备注
 }
+
+export type FavoriteDraft = ReceiptItem & Partial<Pick<FavoriteItem, 'favoriteId' | 'tags' | 'folderId' | 'favoriteAt' | 'note'>>;
 
 // 价格册 (用于 UI 展示的数据结构)
 export interface PriceBook {

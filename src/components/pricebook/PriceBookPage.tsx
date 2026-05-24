@@ -130,7 +130,7 @@ export const PriceBookPage: React.FC<PriceBookPageProps> = ({ theme, onBack }) =
                                     key={item.id}
                                     item={item}
                                     theme={theme}
-                                    onDelete={() => removeFavorite(item.id)}
+                                    onDelete={() => removeFavorite(item.favoriteId)}
                                 />
                             ))}
                         </div>

@@ -1,7 +1,32 @@
-import { HistoryRecord, FavoriteItem, Folder } from '../types/favorites';
+import { HistoryRecord, FavoriteDraft, FavoriteItem, Folder } from '../types/favorites';
 
 const DB_NAME = 'AveragePriceCalculatorDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+const FAVORITES_STORE = 'favorites';
+
+const createId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+const createFavoritesStore = (db: IDBDatabase) => {
+    const favoriteStore = db.createObjectStore(FAVORITES_STORE, { keyPath: 'favoriteId' });
+    favoriteStore.createIndex('itemId', 'id', { unique: false });
+    favoriteStore.createIndex('folderId', 'folderId', { unique: false });
+    favoriteStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+    favoriteStore.createIndex('favoriteAt', 'favoriteAt', { unique: false });
+    return favoriteStore;
+};
+
+const normalizeFavorite = (item: FavoriteDraft): FavoriteItem => ({
+    ...item,
+    favoriteId: item.favoriteId || createId(),
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    folderId: item.folderId ?? null,
+    favoriteAt: item.favoriteAt || new Date().toISOString(),
+});
 
 export class StorageService {
     private db: IDBDatabase | null = null;
@@ -31,32 +56,33 @@ export class StorageService {
 
             request.onupgradeneeded = (event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
+                const transaction = (event.target as IDBOpenDBRequest).transaction;
+                const oldVersion = event.oldVersion;
 
-                // 历史记录 Store
                 if (!db.objectStoreNames.contains('history')) {
                     const historyStore = db.createObjectStore('history', { keyPath: 'id' });
                     historyStore.createIndex('createdAt', 'createdAt', { unique: false });
                 }
 
-                // 收藏夹 Store
                 if (!db.objectStoreNames.contains('folders')) {
                     const folderStore = db.createObjectStore('folders', { keyPath: 'id' });
                     folderStore.createIndex('updatedAt', 'updatedAt', { unique: false });
                 }
 
-                // 收藏项 Store
-                if (!db.objectStoreNames.contains('favorites')) {
-                    const favoriteStore = db.createObjectStore('favorites', { keyPath: 'id', autoIncrement: true }); // Use autoIncrement or specific ID strategy
-                    // 注意：FavoriteItem 继承自 ReceiptItem，ReceiptItem 有 id (number)。
-                    // 这里我们可能需要一个新的唯一 ID，或者复用 ReceiptItem 的 ID (如果它是唯一的)。
-                    // 为了安全起见，我们让 Store autoIncrement，但在查询时使用 folderId 索引。
-                    // 实际上 ReceiptItem.id 只是当前比价列表里的临时 ID，不适合做永久 ID。
-                    // 所以我们在存入 FavoriteItem 时，应该生成一个 uuid 或者让 DB 自增。
-                    // 修正：favorites.ts 里定义了 dbId?: number
+                if (!db.objectStoreNames.contains(FAVORITES_STORE)) {
+                    createFavoritesStore(db);
+                    return;
+                }
 
-                    favoriteStore.createIndex('folderId', 'folderId', { unique: false });
-                    favoriteStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
-                    favoriteStore.createIndex('favoriteAt', 'favoriteAt', { unique: false });
+                const existingStore = transaction?.objectStore(FAVORITES_STORE);
+                if (oldVersion < 2 && existingStore && existingStore.keyPath !== 'favoriteId') {
+                    const getAllRequest = existingStore.getAll();
+                    getAllRequest.onsuccess = () => {
+                        const migratedItems = (getAllRequest.result as FavoriteDraft[]).map(normalizeFavorite);
+                        db.deleteObjectStore(FAVORITES_STORE);
+                        const favoriteStore = createFavoritesStore(db);
+                        migratedItems.forEach((item) => favoriteStore.put(item));
+                    };
                 }
             };
         });
@@ -68,8 +94,6 @@ export class StorageService {
         }
         return this.db!;
     }
-
-    // --- History Operations ---
 
     async addHistory(record: HistoryRecord): Promise<void> {
         const db = await this.getDB();
@@ -89,7 +113,6 @@ export class StorageService {
             const transaction = db.transaction(['history'], 'readonly');
             const store = transaction.objectStore('history');
             const index = store.index('createdAt');
-            // 倒序获取
             const request = index.openCursor(null, 'prev');
             const results: HistoryRecord[] = [];
 
@@ -130,72 +153,61 @@ export class StorageService {
         });
     }
 
-    // --- Favorites Operations ---
-
-    async addFavorite(item: FavoriteItem): Promise<void> {
+    async addFavorite(item: FavoriteDraft): Promise<void> {
         const db = await this.getDB();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(['favorites'], 'readwrite');
-            const store = transaction.objectStore('favorites');
-            // 如果没有 id，可以生成一个 UUID，或者让 DB 自增 (如果 keyPath 不是 id)
-            // 在这里我们假设 FavoriteItem 传入时会有唯一的 ID (例如用 crypto.randomUUID() 或者时间戳)
-            // 为了简单，我们强制要求传入 ID 或者在这里生成
-            const itemToSave = { ...item };
-            if (!itemToSave.id) {
-                // @ts-ignore
-                itemToSave.id = crypto.randomUUID ? parseInt(crypto.randomUUID()) : Date.now();
-                // ReceiptItem id is number, but we need string ideally for global unique.
-                // Let's modify ReceiptItem or just use a timestamp for now if strictly number.
-                // Waiting... ReceiptItem.id is number. Let's use Date.now() for unique number ID.
-                itemToSave.id = Date.now();
+            const transaction = db.transaction([FAVORITES_STORE], 'readwrite');
+            const store = transaction.objectStore(FAVORITES_STORE);
+
+            const save = (existing?: FavoriteItem) => {
+                const itemToSave = normalizeFavorite({
+                    ...existing,
+                    ...item,
+                    favoriteId: item.favoriteId || existing?.favoriteId,
+                });
+                store.put(itemToSave);
+            };
+
+            if (item.favoriteId) {
+                save();
+            } else {
+                const request = store.index('itemId').get(item.id);
+                request.onsuccess = () => save(request.result as FavoriteItem | undefined);
+                request.onerror = () => reject(request.error);
             }
 
-            const request = store.put(itemToSave); // put supports update if key exists
-
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
         });
     }
 
     async getFavorites(folderId: string | null = null): Promise<FavoriteItem[]> {
-        const db = await this.getDB();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(['favorites'], 'readonly');
-            const store = transaction.objectStore('favorites');
-            const index = store.index('folderId');
-            // IDB cannot index null directly in some browsers/implementations perfectly standardly 
-            // but 'null' value is valid key.
-            const request = index.getAll(folderId);
-
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
+        const allFavorites = await this.getAllFavorites();
+        return allFavorites.filter(item => item.folderId === folderId);
     }
 
     async getAllFavorites(): Promise<FavoriteItem[]> {
         const db = await this.getDB();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(['favorites'], 'readonly');
-            const store = transaction.objectStore('favorites');
+            const transaction = db.transaction([FAVORITES_STORE], 'readonly');
+            const store = transaction.objectStore(FAVORITES_STORE);
             const request = store.getAll();
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }
 
-    async deleteFavorite(id: number): Promise<void> {
+    async deleteFavorite(favoriteId: string): Promise<void> {
         const db = await this.getDB();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(['favorites'], 'readwrite');
-            const store = transaction.objectStore('favorites');
-            const request = store.delete(id);
+            const transaction = db.transaction([FAVORITES_STORE], 'readwrite');
+            const store = transaction.objectStore(FAVORITES_STORE);
+            const request = store.delete(favoriteId);
 
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
     }
-
-    // --- Folder Operations ---
 
     async createFolder(folder: Folder): Promise<void> {
         const db = await this.getDB();
@@ -224,22 +236,19 @@ export class StorageService {
     async deleteFolder(id: string): Promise<void> {
         const db = await this.getDB();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(['folders', 'favorites'], 'readwrite');
+            const transaction = db.transaction(['folders', FAVORITES_STORE], 'readwrite');
             const folderStore = transaction.objectStore('folders');
-            const favoriteStore = transaction.objectStore('favorites');
+            const favoriteStore = transaction.objectStore(FAVORITES_STORE);
 
-            // Delete folder
             folderStore.delete(id);
 
-            // Move items to root (folderId = null) or delete them?
-            // Proposal: Move to root.
             const index = favoriteStore.index('folderId');
             const request = index.openCursor(id);
 
             request.onsuccess = (event) => {
                 const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
                 if (cursor) {
-                    const updateData = cursor.value;
+                    const updateData = cursor.value as FavoriteItem;
                     updateData.folderId = null;
                     cursor.update(updateData);
                     cursor.continue();

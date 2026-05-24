@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.averagepricecalculator.app',
   appName: 'AveragePriceCalculator',
   webDir: 'dist',
-  bundledWebRuntime: false,
   server: {
     androidScheme: 'https',
   },

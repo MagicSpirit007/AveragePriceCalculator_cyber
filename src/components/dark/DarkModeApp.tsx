@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Download, Sun, Terminal, Play, Book } from 'lucide-react';
+import { Trash2, Sun, Terminal, Play, Book } from 'lucide-react';
 import { ReceiptItem, THEME_COUNT, ActiveField } from '../../types';
 import { playSound } from '../../utils/sound';
 import { safeCalculate } from '../../utils/calculate';
@@ -12,6 +12,7 @@ import { FavoriteModal } from '../common/FavoriteModal';
 import { HistoryIcon } from '../common/HistoryIcon';
 import { useFavorites } from '../../hooks/useFavorites';
 import { PriceBookPage } from '../pricebook/PriceBookPage';
+import { FavoriteDraft } from '../../types/favorites';
 
 interface DarkModeAppProps {
     onToggleTheme: () => void;
@@ -32,14 +33,10 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
 
     // Favorites State
     const [favModalOpen, setFavModalOpen] = useState(false);
-    const [itemToFav, setItemToFav] = useState<ReceiptItem | null>(null);
+    const [itemToFav, setItemToFav] = useState<FavoriteDraft | null>(null);
 
     const { addHistory } = useHistory();
     const { favorites } = useFavorites();
-
-    // PWA
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-    const [showInstallBtn, setShowInstallBtn] = useState(false);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const priceRef = useRef<HTMLInputElement>(null);
@@ -56,38 +53,17 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
         }
     }, [items]);
 
-    // PWA 安装提示
-    useEffect(() => {
-        const handler = (e: any) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-            setShowInstallBtn(true);
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
-
-    const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setShowInstallBtn(false);
-        }
-        setDeferredPrompt(null);
-    };
-
     const bestUnitPrice = items.length > 0 ? Math.min(...items.map((i) => i.unitPrice)) : -1;
 
     const handlePrint = async () => {
         const p = safeCalculate(priceInput);
-        const countVal = safeCalculate(countInput);
-        const count = (isNaN(countVal) || countVal <= 0) ? 1 : countVal;
+        const countVal = countInput.trim() ? safeCalculate(countInput) : 1;
+        const count = countVal;
 
         // Per unit amount is always 1 in this new mode
         const perUnit = 1;
 
-        if (isNaN(p)) {
+        if (!Number.isFinite(p) || p <= 0 || !Number.isFinite(count) || count <= 0) {
             playSound('error');
             return;
         }
@@ -139,7 +115,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
     };
 
     const handleFavorite = (item: ReceiptItem) => {
-        setItemToFav(item);
+        setItemToFav(favorites.find(f => f.id === item.id) || item);
         setFavModalOpen(true);
     };
 
@@ -235,15 +211,6 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                     >
                         <Sun size={18} />
                     </button>
-
-                    {showInstallBtn && (
-                        <button
-                            onClick={handleInstallClick}
-                            className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold text-cyber-black bg-cyber-cyan hover:bg-white hover:text-cyber-black transition-all shadow-[0_0_10px_rgba(0,240,255,0.4)] clip-tech-border"
-                        >
-                            <Download size={10} /> INSTALL
-                        </button>
-                    )}
 
                     {items.length > 0 && (
                         <button
@@ -391,11 +358,11 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                 <div className="flex gap-3 h-14">
                                     <button
                                         onClick={handlePrint}
-                                        disabled={!priceInput || !countInput} // Label not required? Assuming logic. User said change amount to label.
+                                        disabled={!priceInput}
                                         className={`
                                             w-full relative overflow-hidden group
                                             bg-gray-900/80 backdrop-blur-sm
-                                            border-2 ${!priceInput || !countInput ? 'border-gray-800 opacity-50' : 'border-cyber-yellow hover:border-white'}
+                                            border-2 ${!priceInput ? 'border-gray-800 opacity-50' : 'border-cyber-yellow hover:border-white'}
                                             flex items-center justify-center
                                             clip-corner-input
                                             transition-all duration-200
@@ -408,7 +375,7 @@ export const DarkModeApp: React.FC<DarkModeAppProps> = ({ onToggleTheme }) => {
                                         {/* Text & Icon */}
                                         <div className={`
                                             relative z-10 flex items-center gap-3 font-black text-lg tracking-[0.2em] uppercase italic
-                                            ${!priceInput || !countInput ? 'text-gray-600' : 'text-cyber-yellow group-hover:text-white group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]'}
+                                            ${!priceInput ? 'text-gray-600' : 'text-cyber-yellow group-hover:text-white group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]'}
                                         `}>
                                             <span>开始分析</span>
                                             <Play size={20} className="fill-current" />

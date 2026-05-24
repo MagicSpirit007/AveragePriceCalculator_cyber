@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { FavoriteItem, Folder } from '../types/favorites';
+import { FavoriteDraft, FavoriteItem, Folder } from '../types/favorites';
 import { storageService } from '../services/storage';
 
 interface FavoritesContextType {
     favorites: FavoriteItem[];
     folders: Folder[];
     loading: boolean;
-    addFavorite: (item: FavoriteItem) => Promise<void>;
-    removeFavorite: (id: number) => Promise<void>;
+    addFavorite: (item: FavoriteDraft) => Promise<void>;
+    removeFavorite: (favoriteId: string) => Promise<void>;
     createFolder: (folder: Folder) => Promise<void>;
     deleteFolder: (id: string) => Promise<void>;
     getFavoritesInFolder: (folderId: string | null) => FavoriteItem[];
@@ -43,7 +43,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         loadData();
     }, [loadData]);
 
-    const addFavorite = async (item: FavoriteItem) => {
+    const addFavorite = async (item: FavoriteDraft) => {
         try {
             await storageService.addFavorite(item);
             await loadData();
@@ -52,9 +52,9 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
     };
 
-    const removeFavorite = async (id: number) => {
+    const removeFavorite = async (favoriteId: string) => {
         try {
-            await storageService.deleteFavorite(id);
+            await storageService.deleteFavorite(favoriteId);
             await loadData();
         } catch (error) {
             console.error('Failed to remove favorite:', error);

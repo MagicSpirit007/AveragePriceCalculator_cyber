@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { useFavorites } from '../../hooks/useFavorites';
-import { FavoriteItem, Folder } from '../../types/favorites';
+import { FavoriteDraft, Folder } from '../../types/favorites';
 import { Modal } from './Modal';
-import { TagInput } from './TagInput';
 import { FolderPicker } from './FolderPicker';
 import { playSound } from '../../utils/sound';
 
 interface FavoriteModalProps {
     isOpen: boolean;
     onClose: () => void;
-    item: FavoriteItem | null;
+    item: FavoriteDraft | null;
     theme: 'light' | 'dark';
 }
 
 export const FavoriteModal: React.FC<FavoriteModalProps> = ({ isOpen, onClose, item, theme }) => {
-    const { folders, addFavorite, createFolder } = useFavorites();
+    const { folders, addFavorite, createFolder, deleteFolder } = useFavorites();
     const [tags, setTags] = useState<string[]>([]);
     const [folderId, setFolderId] = useState<string | null>(null);
     const [note, setNote] = useState('');
@@ -34,7 +33,7 @@ export const FavoriteModal: React.FC<FavoriteModalProps> = ({ isOpen, onClose, i
 
         setIsSaving(true);
         // Prepare favorite item
-        const favItem: FavoriteItem = {
+        const favItem: FavoriteDraft = {
             ...item,
             tags,
             folderId,
@@ -88,6 +87,7 @@ export const FavoriteModal: React.FC<FavoriteModalProps> = ({ isOpen, onClose, i
                         selectedId={folderId}
                         onSelect={setFolderId}
                         onCreateNew={handleCreateFolder}
+                        onDelete={deleteFolder}
                         theme={theme}
                     />
                 </div>

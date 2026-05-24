@@ -13,7 +13,7 @@
 2. Run the app: `npm run dev`
 
 ## Build APK (Android)
-这个项目已经接入 Capacitor，可将现有 PWA/Web 代码直接打包成 Android APK。
+这个项目已经接入 Capacitor，可将现有 Web 代码直接打包成 Android APK。
 
 ### Prerequisites
 1. Node.js (已满足)

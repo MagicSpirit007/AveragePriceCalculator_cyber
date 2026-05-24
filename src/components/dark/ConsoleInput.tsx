@@ -84,7 +84,7 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
                     : 'border-gray-800 bg-gray-900/40 hover:border-gray-600'}
       `}>
                 {/* Animated Background Grid for Active State */}
-                {active && <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-10 animate-grid-scroll"></div>}
+                {active && <div className="console-texture absolute inset-0 opacity-10 animate-grid-scroll"></div>}
 
                 <input
                     ref={inputRef}

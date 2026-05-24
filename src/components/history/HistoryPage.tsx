@@ -6,6 +6,7 @@ import { ThemeMode, ReceiptItem } from '../../types';
 import { HolographicItem } from '../dark/HolographicItem';
 import { LightReceipt } from '../light/LightReceipt';
 import { FavoriteModal } from '../common/FavoriteModal';
+import { FavoriteDraft } from '../../types/favorites';
 
 interface HistoryPageProps {
     theme: ThemeMode;
@@ -16,14 +17,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ theme, onBack }) => {
     const { history, loading, deleteHistory, clearHistory } = useHistory();
     const { favorites } = useFavorites();
     const [favModalOpen, setFavModalOpen] = useState(false);
-    const [itemToFav, setItemToFav] = useState<ReceiptItem | null>(null);
+    const [itemToFav, setItemToFav] = useState<FavoriteDraft | null>(null);
 
     if (loading) {
         return <div className="p-10 text-center opacity-50">Loading database...</div>;
     }
 
     const handleFavorite = (item: ReceiptItem) => {
-        setItemToFav(item);
+        setItemToFav(favorites.find(f => f.id === item.id) || item);
         setFavModalOpen(true);
     };
 

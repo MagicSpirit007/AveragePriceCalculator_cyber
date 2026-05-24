@@ -5,7 +5,6 @@ import {
     RefreshCcw,
     ShoppingBag,
     Sparkles,
-    Download,
     Moon,
 
     Book
@@ -21,6 +20,7 @@ import { HistoryIcon } from '../common/HistoryIcon';
 import { useFavorites } from '../../hooks/useFavorites';
 import { LightReceipt } from './LightReceipt';
 import { PriceBookPage } from '../pricebook/PriceBookPage';
+import { FavoriteDraft } from '../../types/favorites';
 
 interface LightModeAppProps {
     onToggleTheme: () => void;
@@ -41,14 +41,10 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
 
     // Favorites State
     const [favModalOpen, setFavModalOpen] = useState(false);
-    const [itemToFav, setItemToFav] = useState<ReceiptItem | null>(null);
+    const [itemToFav, setItemToFav] = useState<FavoriteDraft | null>(null);
 
     const { addHistory } = useHistory();
     const { favorites } = useFavorites();
-
-    // PWA
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-    const [showInstallBtn, setShowInstallBtn] = useState(false);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const priceRef = useRef<HTMLInputElement>(null);
@@ -65,38 +61,17 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
         }
     }, [items]);
 
-    // PWA 安装提示
-    useEffect(() => {
-        const handler = (e: any) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-            setShowInstallBtn(true);
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
-
-    const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setShowInstallBtn(false);
-        }
-        setDeferredPrompt(null);
-    };
-
     const bestUnitPrice = items.length > 0 ? Math.min(...items.map((i) => i.unitPrice)) : -1;
 
     const handlePrint = async () => {
         const p = safeCalculate(priceInput);
-        const countVal = safeCalculate(countInput);
-        const count = (isNaN(countVal) || countVal <= 0) ? 1 : countVal;
+        const countVal = countInput.trim() ? safeCalculate(countInput) : 1;
+        const count = countVal;
 
         // Fixed per unit to 1
         const perUnit = 1;
 
-        if (isNaN(p)) {
+        if (!Number.isFinite(p) || p <= 0 || !Number.isFinite(count) || count <= 0) {
             playSound('error');
             return;
         }
@@ -148,7 +123,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
     };
 
     const handleFavorite = (item: ReceiptItem) => {
-        setItemToFav(item);
+        setItemToFav(favorites.find(f => f.id === item.id) || item);
         setFavModalOpen(true);
     };
 
@@ -201,11 +176,6 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                         <Moon size={16} fill="currentColor" />
                     </button>
 
-                    {showInstallBtn && (
-                        <button className="action-btn install-btn" onClick={handleInstallClick}>
-                            <Download size={14} /> 安装应用
-                        </button>
-                    )}
                     {items.length > 0 && (
                         <button className="action-btn" onClick={handleReset}>
                             <RefreshCcw size={14} />
@@ -310,7 +280,7 @@ export const LightModeApp: React.FC<LightModeAppProps> = ({ onToggleTheme }) => 
                         <button
                             className={`print-btn ${isPrinting ? 'animate' : ''}`}
                             onClick={handlePrint}
-                            disabled={!priceInput || !countInput}
+                            disabled={!priceInput}
                         >
                             <Printer size={32} strokeWidth={3} />
                         </button>
